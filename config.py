@@ -27,4 +27,4 @@ if not GROQ_API_KEY:
         GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
     except Exception:
         # Fallback local key
-        GROQ_API_KEY = "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"
+        print("failed to load")
