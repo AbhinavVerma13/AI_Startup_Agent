@@ -448,6 +448,11 @@
                         <span class="password-toggle-eye" id="password-toggle-trigger">👁️</span>
                     </div>
 
+                    <!-- Forgot Password Link (visible in Login mode only) -->
+                    <div class="forgot-pwd-link-wrapper" id="forgot-pwd-link-wrapper" style="display: none; text-align: right; margin-top: -8px; margin-bottom: 16px;">
+                        <span class="auth-link" id="forgot-pwd-trigger" style="font-size: 0.8rem; color: #71717a;">Forgot password?</span>
+                    </div>
+
                     <!-- Terms & Conditions checkbox (Sign Up mode only) -->
                     <div class="terms-wrapper" id="auth-terms-wrapper">
                         <label class="checkbox-container">
@@ -463,10 +468,46 @@
                     </button>
                 </form>
 
-                <div class="divider">Or register with</div>
+                <!-- Forgot Password Screen 1: Send OTP -->
+                <form id="forgot-email-form" style="display: none;">
+                    <div class="input-group">
+                        <input type="email" id="forgot-email-input" class="text-input" placeholder="Enter your email address" required>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn" id="forgot-email-submit-btn" style="width: 100%; border-radius: 8px; margin-top: 10px;">
+                        <span class="submit-spinner loading-spinner" id="forgot-email-spinner" style="display: none; width: 16px; height: 16px; margin: 0; border-width: 2px;"></span>
+                        <span id="forgot-email-submit-text">Send Verification Code</span>
+                    </button>
+                    
+                    <div class="auth-footer" style="text-align: center; margin-top: 20px;">
+                        <span class="auth-link" id="forgot-back-to-login">Back to Login</span>
+                    </div>
+                </form>
+
+                <!-- Forgot Password Screen 2: Verify Code & Reset -->
+                <form id="forgot-reset-form" style="display: none;">
+                    <div class="input-group">
+                        <input type="text" id="forgot-otp-input" class="text-input" placeholder="6-digit verification code" required maxlength="6" style="text-align: center; font-size: 1.25rem; letter-spacing: 4px; font-weight: bold;">
+                    </div>
+                    
+                    <div class="input-group password-input-wrapper">
+                        <input type="password" id="forgot-new-password" class="text-input" placeholder="Enter new password" required>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn" id="forgot-reset-submit-btn" style="width: 100%; border-radius: 8px; margin-top: 10px;">
+                        <span class="submit-spinner loading-spinner" id="forgot-reset-spinner" style="display: none; width: 16px; height: 16px; margin: 0; border-width: 2px;"></span>
+                        <span id="forgot-reset-submit-text">Reset Password</span>
+                    </button>
+                    
+                    <div class="auth-footer" style="text-align: center; margin-top: 20px;">
+                        <span class="auth-link" id="forgot-reset-back-to-login">Back to Login</span>
+                    </div>
+                </form>
+
+                <div class="divider" id="social-divider">Or register with</div>
 
                 <!-- Social Sign-in Buttons -->
-                <div class="social-row">
+                <div class="social-row" id="social-row">
                     <button class="social-btn google" id="google-signin-mock">
                         <svg width="18" height="18" viewBox="0 0 18 18" style="margin-right: 8px;">
                             <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35L15 2.1C13.46.67 11.43 0 9 0 5.51 0 2.51 1.97 1.03 4.97L3.97 7.3C4.67 5.18 6.66 3.58 9 3.58z"/>

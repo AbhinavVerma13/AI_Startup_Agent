@@ -11,6 +11,12 @@ app.secret_key = os.urandom(24) # Set secure session key
 
 DB_FILE = "users.db"
 
+import smtplib
+import random
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from datetime import datetime, timedelta
+
 # Initialize SQLite database
 def init_db():
     conn = sqlite3.connect(DB_FILE)
@@ -21,7 +27,9 @@ def init_db():
             email TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
             first_name TEXT,
-            last_name TEXT
+            last_name TEXT,
+            otp_code TEXT,
+            otp_expiry DATETIME
         )
     """)
     try:
@@ -30,6 +38,14 @@ def init_db():
         pass
     try:
         cursor.execute("ALTER TABLE users ADD COLUMN last_name TEXT")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN otp_code TEXT")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN otp_expiry DATETIME")
     except sqlite3.OperationalError:
         pass
     conn.commit()
@@ -313,6 +329,149 @@ def login():
     finally:
         if conn:
             conn.close()
+
+SMTP_EMAIL = os.getenv("SMTP_EMAIL")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+
+def send_otp_email(to_email, otp):
+    if not SMTP_EMAIL or not SMTP_PASSWORD:
+        print(f"\n==================================================")
+        print(f"[SIMULATED EMAIL] To: {to_email}")
+        print(f"Your password reset OTP code is: {otp}")
+        print(f"==================================================\n")
+        return False
+        
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = SMTP_EMAIL
+        msg['To'] = to_email
+        msg['Subject'] = f"{otp} is your AI Startup Builder Password Reset Code"
+        
+        body = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; background-color: #0f172a; color: #f8fafc; padding: 30px;">
+            <div style="max-width: 500px; margin: 0 auto; background-color: #1e293b; padding: 30px; border-radius: 12px; border: 1px solid #334155;">
+                <h2 style="color: #38bdf8; text-align: center; margin-bottom: 24px;">Password Reset Request</h2>
+                <p>Hello,</p>
+                <p>We received a request to reset your password for AI Startup Builder. Use the verification code below to complete the reset. This code is valid for 10 minutes.</p>
+                <div style="background-color: #0f172a; color: #38bdf8; font-size: 32px; font-weight: bold; text-align: center; padding: 16px; border-radius: 8px; letter-spacing: 4px; margin: 24px 0;">
+                    {otp}
+                </div>
+                <p>If you did not request this, you can safely ignore this email.</p>
+                <hr style="border: 0; border-top: 1px solid #334155; margin: 24px 0;">
+                <p style="font-size: 12px; color: #94a3b8; text-align: center;">AI Startup Builder Agent &copy; 2026</p>
+            </div>
+        </body>
+        </html>
+        """
+        msg.attach(MIMEText(body, 'html'))
+        
+        server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+        server.login(SMTP_EMAIL, SMTP_PASSWORD)
+        server.sendmail(SMTP_EMAIL, to_email, msg.as_string())
+        server.close()
+        return True
+    except Exception as e:
+        print("SMTP Send Email Exception:", str(e))
+        return False
+
+# Authentication API: Forgot Password (Request OTP)
+@app.route('/api/forgot-password', methods=['POST'])
+def forgot_password():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+        
+    email = data.get("email", "").strip().lower()
+    if not email:
+        return jsonify({"error": "Email address is required."}), 400
+        
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_FILE, timeout=30.0)
+        cursor = conn.cursor()
+        
+        # Verify user exists
+        cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({"error": "No account associated with this email address."}), 404
+            
+        # Generate 6-digit OTP
+        otp = str(random.randint(100000, 999999))
+        expiry_time = (datetime.now() + timedelta(minutes=10)).strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Update user's OTP fields
+        cursor.execute("UPDATE users SET otp_code = ?, otp_expiry = ? WHERE email = ?", (otp, expiry_time, email))
+        conn.commit()
+        
+        # Send OTP (simulated or real SMTP)
+        sent = send_otp_email(email, otp)
+        
+        msg = "Verification code sent to your email!"
+        if not sent:
+            msg = f"Verification code simulated: {otp} (check server logs/console)"
+            
+        return jsonify({"success": True, "message": msg})
+    except Exception as e:
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+    finally:
+        if conn:
+            conn.close()
+
+# Authentication API: Reset Password (Confirm OTP & Update)
+@app.route('/api/reset-password', methods=['POST'])
+def reset_password():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+        
+    email = data.get("email", "").strip().lower()
+    otp = data.get("otp", "").strip()
+    new_password = data.get("newPassword", "")
+    
+    if not email or not otp or not new_password:
+        return jsonify({"error": "Email, verification code, and new password are required."}), 400
+        
+    hashed_pwd = hash_password(new_password)
+    
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_FILE, timeout=30.0)
+        cursor = conn.cursor()
+        
+        # Fetch OTP code and expiry
+        cursor.execute("SELECT otp_code, otp_expiry FROM users WHERE email = ?", (email,))
+        row = cursor.fetchone()
+        
+        if not row:
+            return jsonify({"error": "Invalid request or account does not exist."}), 400
+            
+        db_otp, db_expiry_str = row[0], row[1]
+        
+        if not db_otp or not db_expiry_str:
+            return jsonify({"error": "No password reset request found for this email."}), 400
+            
+        # Parse and check expiry
+        db_expiry = datetime.strptime(db_expiry_str, '%Y-%m-%d %H:%M:%S')
+        if datetime.now() > db_expiry:
+            return jsonify({"error": "Verification code has expired. Please request a new one."}), 400
+            
+        # Check matching OTP code
+        if db_otp != otp:
+            return jsonify({"error": "Invalid verification code. Please try again."}), 400
+            
+        # Success: Update password and clear OTP fields
+        cursor.execute("UPDATE users SET password = ?, otp_code = NULL, otp_expiry = NULL WHERE email = ?", (hashed_pwd, email))
+        conn.commit()
+        
+        return jsonify({"success": True, "message": "Password reset successfully! You can now log in."})
+    except Exception as e:
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+    finally:
+        if conn:
+            conn.close()
+
 
 # Authentication: Logout
 @app.route('/logout')

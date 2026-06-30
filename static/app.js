@@ -417,27 +417,171 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        const forgotPwdLinkWrapper = document.getElementById('forgot-pwd-link-wrapper');
+        const forgotPwdTrigger = document.getElementById('forgot-pwd-trigger');
+        const forgotEmailForm = document.getElementById('forgot-email-form');
+        const forgotResetForm = document.getElementById('forgot-reset-form');
+        const forgotBackToLogin = document.getElementById('forgot-back-to-login');
+        const forgotResetBackToLogin = document.getElementById('forgot-reset-back-to-login');
+        
+        const socialDivider = document.getElementById('social-divider');
+        const socialRow = document.getElementById('social-row');
+        
+        let resetEmailAddress = '';
+
+        // Helper: Toggle authentication subviews
+        function showAuthFormState(state) {
+            if (state === 'login-register') {
+                if (authForm) authForm.style.display = 'block';
+                if (forgotEmailForm) forgotEmailForm.style.display = 'none';
+                if (forgotResetForm) forgotResetForm.style.display = 'none';
+                
+                if (socialDivider) socialDivider.style.display = 'flex';
+                if (socialRow) socialRow.style.display = 'flex';
+                
+                if (isLoginMode) {
+                    authHeaderText.textContent = 'Sign in to account';
+                    authSubText.innerHTML = "Don't have an account? <span class='auth-link' id='auth-switch-link-inner'>Register</span>";
+                    if (forgotPwdLinkWrapper) forgotPwdLinkWrapper.style.display = 'block';
+                } else {
+                    authHeaderText.textContent = 'Create an account';
+                    authSubText.innerHTML = "Already have an account? <span class='auth-link' id='auth-switch-link-inner'>Log in</span>";
+                    if (forgotPwdLinkWrapper) forgotPwdLinkWrapper.style.display = 'none';
+                }
+                
+                // Re-bind click handler on the dynamically generated subtitle link
+                const subLink = document.getElementById('auth-switch-link-inner');
+                if (subLink) subLink.addEventListener('click', () => authSwitchLink.click());
+            } else if (state === 'forgot-email') {
+                if (authForm) authForm.style.display = 'none';
+                if (forgotEmailForm) forgotEmailForm.style.display = 'block';
+                if (forgotResetForm) forgotResetForm.style.display = 'none';
+                
+                if (socialDivider) socialDivider.style.display = 'none';
+                if (socialRow) socialRow.style.display = 'none';
+                if (forgotPwdLinkWrapper) forgotPwdLinkWrapper.style.display = 'none';
+                
+                authHeaderText.textContent = 'Reset Password';
+                authSubText.innerHTML = 'Enter your email to request an OTP code';
+            } else if (state === 'forgot-reset') {
+                if (authForm) authForm.style.display = 'none';
+                if (forgotEmailForm) forgotEmailForm.style.display = 'none';
+                if (forgotResetForm) forgotResetForm.style.display = 'block';
+                
+                if (socialDivider) socialDivider.style.display = 'none';
+                if (socialRow) socialRow.style.display = 'none';
+                if (forgotPwdLinkWrapper) forgotPwdLinkWrapper.style.display = 'none';
+                
+                authHeaderText.textContent = 'Verify Verification Code';
+                authSubText.innerHTML = 'Enter the 6-digit OTP code sent to your email';
+            }
+        }
+
         // Toggle sign-in/up views
         if (authSwitchLink) {
             authSwitchLink.addEventListener('click', () => {
                 isLoginMode = !isLoginMode;
-                if (isLoginMode) {
-                    authHeaderText.textContent = 'Sign in to account';
-                    authSubText.innerHTML = "Don't have an account? <span class='auth-link' id='auth-switch-link-inner'>Register</span>";
-                    authSubmitText.textContent = 'Sign In';
-                    if (authNameRow) authNameRow.style.display = 'none';
-                    if (authTermsWrapper) authTermsWrapper.style.display = 'none';
-                    
-                    // Re-bind click handler on the dynamically generated subtitle link
-                    document.getElementById('auth-switch-link-inner').addEventListener('click', () => authSwitchLink.click());
-                } else {
-                    authHeaderText.textContent = 'Create an account';
-                    authSubText.innerHTML = "Already have an account? <span class='auth-link' id='auth-switch-link-inner'>Log in</span>";
-                    authSubmitText.textContent = 'Create account';
-                    if (authNameRow) authNameRow.style.display = 'flex';
-                    if (authTermsWrapper) authTermsWrapper.style.display = 'block';
-                    
-                    document.getElementById('auth-switch-link-inner').addEventListener('click', () => authSwitchLink.click());
+                showAuthFormState('login-register');
+            });
+        }
+
+        // Forgot password trigger clicks
+        if (forgotPwdTrigger) {
+            forgotPwdTrigger.addEventListener('click', () => {
+                showAuthFormState('forgot-email');
+            });
+        }
+
+        if (forgotBackToLogin) {
+            forgotBackToLogin.addEventListener('click', () => {
+                showAuthFormState('login-register');
+            });
+        }
+
+        if (forgotResetBackToLogin) {
+            forgotResetBackToLogin.addEventListener('click', () => {
+                showAuthFormState('login-register');
+            });
+        }
+
+        // Submit Forgot Password: Send OTP
+        if (forgotEmailForm) {
+            forgotEmailForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('forgot-email-input').value.trim();
+                if (!email) return;
+
+                const submitBtn = document.getElementById('forgot-email-submit-btn');
+                const spinner = document.getElementById('forgot-email-spinner');
+                const btnText = document.getElementById('forgot-email-submit-text');
+
+                submitBtn.disabled = true;
+                if (spinner) spinner.style.display = 'block';
+                btnText.textContent = 'Sending code...';
+
+                try {
+                    const response = await fetch('/api/forgot-password', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email })
+                    });
+                    const data = await response.json();
+                    if (response.ok && data.success) {
+                        showToast(data.message);
+                        resetEmailAddress = email;
+                        showAuthFormState('forgot-reset');
+                    } else {
+                        showToast(`❌ ${data.error || 'Failed to send OTP'}`);
+                    }
+                } catch (err) {
+                    showToast(`❌ Network error: ${err.message}`);
+                } finally {
+                    submitBtn.disabled = false;
+                    if (spinner) spinner.style.display = 'none';
+                    btnText.textContent = 'Send Verification Code';
+                }
+            });
+        }
+
+        // Submit Forgot Password: Reset password
+        if (forgotResetForm) {
+            forgotResetForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const otp = document.getElementById('forgot-otp-input').value.trim();
+                const newPassword = document.getElementById('forgot-new-password').value;
+
+                if (!otp || !newPassword) return;
+
+                const submitBtn = document.getElementById('forgot-reset-submit-btn');
+                const spinner = document.getElementById('forgot-reset-spinner');
+                const btnText = document.getElementById('forgot-reset-submit-text');
+
+                submitBtn.disabled = true;
+                if (spinner) spinner.style.display = 'block';
+                btnText.textContent = 'Resetting password...';
+
+                try {
+                    const response = await fetch('/api/reset-password', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: resetEmailAddress, otp, newPassword })
+                    });
+                    const data = await response.json();
+                    if (response.ok && data.success) {
+                        showToast(data.message);
+                        setTimeout(() => {
+                            isLoginMode = true; // Switch state to login
+                            showAuthFormState('login-register');
+                        }, 1200);
+                    } else {
+                        showToast(`❌ ${data.error || 'Reset failed'}`);
+                    }
+                } catch (err) {
+                    showToast(`❌ Network error: ${err.message}`);
+                } finally {
+                    submitBtn.disabled = false;
+                    if (spinner) spinner.style.display = 'none';
+                    btnText.textContent = 'Reset Password';
                 }
             });
         }
