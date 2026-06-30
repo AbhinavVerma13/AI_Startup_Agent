@@ -264,12 +264,12 @@ def register():
         
     hashed = hash_password(password)
     
+    conn = None
     try:
-        conn = sqlite3.connect(DB_FILE)
+        conn = sqlite3.connect(DB_FILE, timeout=30.0)
         cursor = conn.cursor()
         cursor.execute("INSERT INTO users (email, password, first_name, last_name) VALUES (?, ?, ?, ?)", (email, hashed, first_name, last_name))
         conn.commit()
-        conn.close()
         
         session['user_email'] = email
         return jsonify({"success": True, "message": "Account created successfully!"})
@@ -277,6 +277,9 @@ def register():
         return jsonify({"error": "An account with this email already exists"}), 400
     except Exception as e:
         return jsonify({"error": f"Database error: {str(e)}"}), 500
+    finally:
+        if conn:
+            conn.close()
 
 # Authentication API: Login
 @app.route('/api/login', methods=['POST'])
@@ -293,12 +296,12 @@ def login():
         
     hashed = hash_password(password)
     
+    conn = None
     try:
-        conn = sqlite3.connect(DB_FILE)
+        conn = sqlite3.connect(DB_FILE, timeout=30.0)
         cursor = conn.cursor()
         cursor.execute("SELECT password FROM users WHERE email = ?", (email,))
         row = cursor.fetchone()
-        conn.close()
         
         if row and row[0] == hashed:
             session['user_email'] = email
@@ -307,6 +310,9 @@ def login():
             return jsonify({"error": "Invalid email or password"}), 401
     except Exception as e:
         return jsonify({"error": f"Database error: {str(e)}"}), 500
+    finally:
+        if conn:
+            conn.close()
 
 # Authentication: Logout
 @app.route('/logout')
