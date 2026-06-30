@@ -400,52 +400,89 @@
     </div>
     {% else %}
     <!-- ========================================== -->
-    <!-- AUTHENTICATION CARD VIEW (Clerk Style)     -->
+    <!-- AUTHENTICATION VIEW (Split Screen Layout)  -->
     <!-- ========================================== -->
-    <div class="auth-container">
-        <div class="auth-card glass-panel">
-            <div class="logo" style="justify-content: center; margin-bottom: 24px;">
-                🚀 <span>AI Startup Builder</span>
-            </div>
-            
-            <div id="auth-title-box">
-                <h2 class="auth-title" id="auth-header-text">Create your account</h2>
-                <p class="loading-subtext" id="auth-sub-text" style="margin-top: -12px; margin-bottom: 24px;">Welcome! Please fill in the details to get started.</p>
-            </div>
-
-            <!-- Continue with Google Mock Button -->
-            <button class="google-btn" id="google-signin-mock">
-                <svg width="18" height="18" viewBox="0 0 18 18">
-                    <path fill="#4285F4" d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.47h4.84a4.14 4.14 0 0 1-1.8 2.71v2.26h2.91c1.7-1.56 2.69-3.86 2.69-6.6z"/>
-                    <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.2l-2.91-2.26c-.8.54-1.84.87-3.05.87-2.34 0-4.33-1.58-5.03-3.7H1.03v2.33C2.51 16.03 5.51 18 9 18z"/>
-                    <path fill="#FBBC05" d="M3.97 10.7a5.4 5.4 0 0 1 0-3.4V4.97H1.03a9 9 0 0 0 0 8.06l2.94-2.33z"/>
-                    <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35L15 2.1C13.46.67 11.43 0 9 0 5.51 0 2.51 1.97 1.03 4.97L3.97 7.3C4.67 5.18 6.66 3.58 9 3.58z"/>
-                </svg>
-                <span>Continue with Google</span>
-            </button>
-
-            <div class="divider">or</div>
-
-            <!-- Local Email/Password Form -->
-            <form id="auth-form">
-                <div class="input-group">
-                    <label class="input-label" for="auth-email">Email Address</label>
-                    <input type="email" id="auth-email" class="text-input" placeholder="enter your email address" required style="margin-bottom: 16px;">
+    <div class="split-auth-container">
+        <!-- Left Visual Wallpaper Panel -->
+        <div class="auth-left-panel">
+            <div class="auth-panel-content">
+                <div class="auth-panel-logo">🚀 AI Startup Builder</div>
+                <div class="auth-panel-text">
+                    <h2>Capturing Moments,<br>Creating Futures.</h2>
+                    <p>Turn your raw business concept into a fully launched product in minutes.</p>
                 </div>
-                <div class="input-group">
-                    <label class="input-label" for="auth-password">Password</label>
-                    <input type="password" id="auth-password" class="text-input" placeholder="create a password" required style="margin-bottom: 24px;">
+                <div class="auth-panel-dots">
+                    <span class="panel-dot active"></span>
+                    <span class="panel-dot"></span>
+                    <span class="panel-dot"></span>
                 </div>
-                
-                <button type="submit" class="submit-btn" id="auth-submit-btn" style="width: 100%;">
-                    <span class="submit-spinner loading-spinner" id="auth-spinner" style="display: none; width: 16px; height: 16px; margin: 0; border-width: 2px;"></span>
-                    <span id="auth-submit-text">Continue</span>
-                </button>
-            </form>
+            </div>
+        </div>
 
-            <div class="auth-footer">
-                <span id="auth-switch-prompt">Already have an account?</span>
-                <span class="auth-link" id="auth-switch-link">Sign in</span>
+        <!-- Right Forms Panel -->
+        <div class="auth-right-panel">
+            <div class="auth-card-wrapper">
+                <div class="auth-card-header">
+                    <h2 class="auth-title" id="auth-header-text">Create an account</h2>
+                    <p class="auth-subtitle" id="auth-sub-text">Already have an account? <span class="auth-link" id="auth-switch-link">Log in</span></p>
+                </div>
+
+                <!-- Local Form -->
+                <form id="auth-form">
+                    <!-- Split row for First Name / Last Name (renders only in Sign Up mode) -->
+                    <div class="name-row" id="auth-name-row">
+                        <div class="input-group">
+                            <input type="text" id="auth-firstname" class="text-input" placeholder="First name">
+                        </div>
+                        <div class="input-group">
+                            <input type="text" id="auth-lastname" class="text-input" placeholder="Last name">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <input type="email" id="auth-email" class="text-input" placeholder="Email" required>
+                    </div>
+                    
+                    <div class="input-group password-input-wrapper">
+                        <input type="password" id="auth-password" class="text-input" placeholder="Enter your password" required>
+                        <span class="password-toggle-eye" id="password-toggle-trigger">👁️</span>
+                    </div>
+
+                    <!-- Terms & Conditions checkbox (Sign Up mode only) -->
+                    <div class="terms-wrapper" id="auth-terms-wrapper">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="auth-terms-checkbox" required checked>
+                            <span class="checkbox-checkmark"></span>
+                            I agree to the <a href="#" class="terms-link">Terms & Conditions</a>
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn" id="auth-submit-btn" style="width: 100%; border-radius: 8px; margin-top: 10px;">
+                        <span class="submit-spinner loading-spinner" id="auth-spinner" style="display: none; width: 16px; height: 16px; margin: 0; border-width: 2px;"></span>
+                        <span id="auth-submit-text">Create account</span>
+                    </button>
+                </form>
+
+                <div class="divider">Or register with</div>
+
+                <!-- Social Sign-in Buttons -->
+                <div class="social-row">
+                    <button class="social-btn google" id="google-signin-mock">
+                        <svg width="18" height="18" viewBox="0 0 18 18" style="margin-right: 8px;">
+                            <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35L15 2.1C13.46.67 11.43 0 9 0 5.51 0 2.51 1.97 1.03 4.97L3.97 7.3C4.67 5.18 6.66 3.58 9 3.58z"/>
+                            <path fill="#4285F4" d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.47h4.84a4.14 4.14 0 0 1-1.8 2.71v2.26h2.91c1.7-1.56 2.69-3.86 2.69-6.6z"/>
+                            <path fill="#FBBC05" d="M3.97 10.7a5.4 5.4 0 0 1 0-3.4V4.97H1.03a9 9 0 0 0 0 8.06l2.94-2.33z"/>
+                            <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.2l-2.91-2.26c-.8.54-1.84.87-3.05.87-2.34 0-4.33-1.58-5.03-3.7H1.03v2.33C2.51 16.03 5.51 18 9 18z"/>
+                        </svg>
+                        Google
+                    </button>
+                    <button class="social-btn apple" id="apple-signin-mock">
+                        <svg width="16" height="16" viewBox="0 0 170 170" fill="currentColor" style="margin-right: 8px;">
+                            <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.37.13-9.13-1.9-14.27-6.08-3.63-2.94-7.47-7.66-11.52-14.16-7.83-12.63-14.28-26.82-19.34-42.54-5.07-15.72-7.6-30.08-7.6-43.06 0-15.34 3.63-27.53 10.87-36.56 7.25-9.04 16.42-13.59 27.53-13.67 5.86 0 12.03 1.66 18.52 4.96 6.5 3.3 10.93 4.96 13.28 4.96 1.84 0 5.82-1.4 11.95-4.21 6.13-2.82 11.89-4.14 17.27-3.97 14.81.65 25.86 5.8 33.15 15.42-12.87 7.78-19.16 18.25-18.89 31.42.27 10.3 4.13 18.91 11.57 25.84 7.45 6.93 16.14 10.66 26.07 11.2-2.3 6.94-5.32 14.17-9.05 21.69zM119.82 18.53c0-7.39 2.53-14.21 7.6-20.47 6.07-7.44 13.56-11.49 22.48-12.16.13.91.2 1.68.2 2.3 0 7.21-2.73 14.21-8.19 21-5.46 6.79-12.98 10.9-22.56 12.33-.27-1-.41-1.74-.41-2.27z"/>
+                        </svg>
+                        Apple
+                    </button>
+                </div>
             </div>
         </div>
     </div>

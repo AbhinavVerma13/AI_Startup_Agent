@@ -19,9 +19,19 @@ def init_db():
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             email TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL
+            password TEXT NOT NULL,
+            first_name TEXT,
+            last_name TEXT
         )
     """)
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN first_name TEXT")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN last_name TEXT")
+    except sqlite3.OperationalError:
+        pass
     conn.commit()
     conn.close()
 
@@ -246,6 +256,8 @@ def register():
         
     email = data.get("email", "").strip().lower()
     password = data.get("password", "")
+    first_name = data.get("firstName", "").strip()
+    last_name = data.get("lastName", "").strip()
     
     if not email or not password:
         return jsonify({"error": "Email and password are required"}), 400
@@ -255,7 +267,7 @@ def register():
     try:
         conn = sqlite3.connect(DB_FILE)
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO users (email, password) VALUES (?, ?)", (email, hashed))
+        cursor.execute("INSERT INTO users (email, password, first_name, last_name) VALUES (?, ?, ?, ?)", (email, hashed, first_name, last_name))
         conn.commit()
         conn.close()
         

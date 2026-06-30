@@ -392,27 +392,52 @@ document.addEventListener('DOMContentLoaded', () => {
         const authSubmitText = document.getElementById('auth-submit-text');
         const authHeaderText = document.getElementById('auth-header-text');
         const authSubText = document.getElementById('auth-sub-text');
-        const authSwitchPrompt = document.getElementById('auth-switch-prompt');
         const googleSigninMock = document.getElementById('google-signin-mock');
+        const appleSigninMock = document.getElementById('apple-signin-mock');
         const authSpinner = document.getElementById('auth-spinner');
         
-        let isLoginMode = false; // Starts in Sign Up (Register) mode
+        // Split-Screen Fields
+        const authNameRow = document.getElementById('auth-name-row');
+        const authTermsWrapper = document.getElementById('auth-terms-wrapper');
+        const passwordToggleTrigger = document.getElementById('password-toggle-trigger');
+        const passwordInput = document.getElementById('auth-password');
+        
+        let isLoginMode = false; // Starts in Sign Up (Register) mode by default
 
+        // Password Show/Hide Toggle
+        if (passwordToggleTrigger && passwordInput) {
+            passwordToggleTrigger.addEventListener('click', () => {
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    passwordToggleTrigger.textContent = '🔒';
+                } else {
+                    passwordInput.type = 'password';
+                    passwordToggleTrigger.textContent = '👁️';
+                }
+            });
+        }
+
+        // Toggle sign-in/up views
         if (authSwitchLink) {
             authSwitchLink.addEventListener('click', () => {
                 isLoginMode = !isLoginMode;
                 if (isLoginMode) {
-                    authHeaderText.textContent = 'Sign in to your account';
-                    authSubText.textContent = 'Welcome back! Enter your credentials to continue.';
+                    authHeaderText.textContent = 'Sign in to account';
+                    authSubText.innerHTML = "Don't have an account? <span class='auth-link' id='auth-switch-link-inner'>Register</span>";
                     authSubmitText.textContent = 'Sign In';
-                    authSwitchPrompt.textContent = "Don't have an account?";
-                    authSwitchLink.textContent = 'Sign up';
+                    if (authNameRow) authNameRow.style.display = 'none';
+                    if (authTermsWrapper) authTermsWrapper.style.display = 'none';
+                    
+                    // Re-bind click handler on the dynamically generated subtitle link
+                    document.getElementById('auth-switch-link-inner').addEventListener('click', () => authSwitchLink.click());
                 } else {
-                    authHeaderText.textContent = 'Create your account';
-                    authSubText.textContent = 'Welcome! Please fill in the details to get started.';
-                    authSubmitText.textContent = 'Continue';
-                    authSwitchPrompt.textContent = 'Already have an account?';
-                    authSwitchLink.textContent = 'Sign in';
+                    authHeaderText.textContent = 'Create an account';
+                    authSubText.innerHTML = "Already have an account? <span class='auth-link' id='auth-switch-link-inner'>Log in</span>";
+                    authSubmitText.textContent = 'Create account';
+                    if (authNameRow) authNameRow.style.display = 'flex';
+                    if (authTermsWrapper) authTermsWrapper.style.display = 'block';
+                    
+                    document.getElementById('auth-switch-link-inner').addEventListener('click', () => authSwitchLink.click());
                 }
             });
         }
@@ -421,11 +446,19 @@ document.addEventListener('DOMContentLoaded', () => {
             authForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const email = document.getElementById('auth-email').value.trim();
-                const password = document.getElementById('auth-password').value;
+                const password = passwordInput.value;
+                
+                let firstName = '';
+                let lastName = '';
+                if (!isLoginMode) {
+                    firstName = document.getElementById('auth-firstname').value.trim();
+                    lastName = document.getElementById('auth-lastname').value.trim();
+                }
 
                 const endpoint = isLoginMode ? '/api/login' : '/api/register';
                 
-                document.getElementById('auth-submit-btn').disabled = true;
+                const submitBtn = document.getElementById('auth-submit-btn');
+                submitBtn.disabled = true;
                 if (authSpinner) authSpinner.style.display = 'block';
                 authSubmitText.textContent = isLoginMode ? 'Signing in...' : 'Registering...';
 
@@ -435,7 +468,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         headers: {
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify({ email, password })
+                        body: JSON.stringify({ email, password, firstName, lastName })
                     });
 
                     const data = await response.json();
@@ -450,50 +483,57 @@ document.addEventListener('DOMContentLoaded', () => {
                 } catch (err) {
                     showToast(`❌ Network error: ${err.message}`);
                 } finally {
-                    document.getElementById('auth-submit-btn').disabled = false;
+                    submitBtn.disabled = false;
                     if (authSpinner) authSpinner.style.display = 'none';
-                    authSubmitText.textContent = isLoginMode ? 'Sign In' : 'Continue';
+                    authSubmitText.textContent = isLoginMode ? 'Sign In' : 'Create account';
                 }
             });
         }
 
-        if (googleSigninMock) {
-            googleSigninMock.addEventListener('click', async () => {
-                showToast('🌐 Authenticating via Google Sign-In...');
+        // Google / Apple Mock Buttons
+        const mockSocialLogin = async (providerName) => {
+            showToast(`🌐 Authenticating via ${providerName} Sign-In...`);
+            
+            const email = '1217abhinav@gmail.com';
+            const password = 'social-signin-mocked-password-999';
+            const firstName = 'Abhinav';
+            const lastName = 'Verma';
+            
+            try {
+                let response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                let data = await response.json();
                 
-                const email = '1217abhinav@gmail.com';
-                const password = 'google-signin-mocked-password-12345';
-                
-                try {
-                    let response = await fetch('/api/login', {
+                if (!response.ok) {
+                    response = await fetch('/api/register', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email, password })
+                        body: JSON.stringify({ email, password, firstName, lastName })
                     });
-                    let data = await response.json();
-                    
-                    if (!response.ok) {
-                        // Register since user doesn't exist yet
-                        response = await fetch('/api/register', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ email, password })
-                        });
-                        data = await response.json();
-                    }
-                    
-                    if (data.success) {
-                        showToast('🎉 Signed in with Google as Abhinav Verma!');
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1000);
-                    } else {
-                        showToast(`❌ Google Auth Mock failed: ${data.error}`);
-                    }
-                } catch (err) {
-                    showToast(`❌ Connection error during Google Sign-In.`);
+                    data = await response.json();
                 }
-            });
+                
+                if (data.success) {
+                    showToast(`🎉 Signed in with ${providerName} as Abhinav Verma!`);
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    showToast(`❌ ${providerName} Auth Mock failed: ${data.error}`);
+                }
+            } catch (err) {
+                showToast(`❌ Connection error during social sign-in.`);
+            }
+        };
+
+        if (googleSigninMock) {
+            googleSigninMock.addEventListener('click', () => mockSocialLogin('Google'));
+        }
+        if (appleSigninMock) {
+            appleSigninMock.addEventListener('click', () => mockSocialLogin('Apple'));
         }
     }
 });
