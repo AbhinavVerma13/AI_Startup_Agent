@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Startup Builder Agent 🚀</title>
+    <meta name="description" content="Turn your startup ideas into reality instantly. Generate complete business plans, marketing strategies, and fully responsive landing pages.">
+    <!-- Style Sheets -->
+    <link rel="stylesheet" href="/static/style.css">
+    <!-- Marked.js for markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+</head>
+<body>
+
+    <!-- Background blurred image wrapper for selected motivational wallpaper -->
+    <div class="bg-wallpaper-wrapper" id="bg-wrapper"></div>
+    <div class="bg-overlay"></div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="glass-panel">
+            <div class="logo">
+                🚀 <span>AI Startup Builder</span>
+            </div>
+            <div class="nav-actions">
+                <div class="theme-pill" title="Active Wallpaper Theme">
+                    🖼️ Theme: <span id="active-theme-name">Think Bigger</span>
+                </div>
+                <div class="api-badge {% if is_demo %}offline{% endif %}">
+                    <span class="status-dot"></span>
+                    {% if is_demo %}Demo Mode{% else %}AI Active{% endif %}
+                </div>
+            </div>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="badge-glow">Founder's Launchpad</div>
+            <h1>From idea to startup in minutes.</h1>
+            <p class="subtitle">Enter your raw business concept, industry, and name. Let our AI builder shape your strategy, numbers, and landing page instantly.</p>
+        </section>
+
+        <!-- Composer section (Input Card) -->
+        <div class="composer-card glass-panel">
+            <form id="composer-form">
+                <div class="composer-grid">
+                    <div class="input-group">
+                        <label class="input-label" for="startup-name">Startup Name</label>
+                        <input type="text" id="startup-name" class="text-input" placeholder="e.g. ChaiOnWheels" required value="ChaiOnWheels">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label" for="startup-industry">Industry Sector</label>
+                        <select id="startup-industry" class="select-input">
+                            <option value="Food & Beverage">Food & Beverage</option>
+                            <option value="Technology">Technology</option>
+                            <option value="Education">Education</option>
+                            <option value="Healthcare">Healthcare</option>
+                            <option value="E-commerce">E-commerce</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label" for="startup-idea">Startup Idea Description</label>
+                    <textarea id="startup-idea" class="textarea-input" placeholder="Describe your product, who it's for, and the core problem it solves..." required>Quick delivery of hot, fresh home-style tea to office workers in under 15 minutes.</textarea>
+                </div>
+
+                <div class="composer-footer">
+                    <div class="examples-hint">
+                        💡 Click an example below to autofill
+                    </div>
+                    <button type="submit" class="submit-btn" id="submit-btn">
+                        <span class="submit-spinner loading-spinner" id="submit-spinner" style="display: none; width: 16px; height: 16px; margin: 0; border-width: 2px;"></span>
+                        <span id="submit-text">🚀 Generate Startup Package</span>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Examples tags -->
+            <div class="suggestions-container">
+                <button class="suggestion-tag" data-name="ResuMagic" data-industry="Technology" data-idea="AI-powered resume optimizer that automatically scans a job description and updates bullet points in real-time to match candidate credentials.">✨ AI Resume Tailor</button>
+                <button class="suggestion-tag" data-name="BiteDash" data-industry="Food & Beverage" data-idea="Hyperlocal late-night kitchen networks delivering premium hot snacks to university students in under 12 minutes.">🍔 Late Night Snacks</button>
+                <button class="suggestion-tag" data-name="MedVerify" data-industry="Healthcare" data-idea="Blockchain-powered credential verification platform for hospitals to hire locum doctors with zero administrative delays.">🏥 Healthcare Verifier</button>
+                <button class="suggestion-tag" data-name="SkillSpring" data-industry="Education" data-idea="Interactive coding playground for kids using gamified cartoon story quests to explain data structures.">🎮 Kids Coding Games</button>
+            </div>
+        </div>
+
+        <!-- Loading State wrapper -->
+        <div class="loading-wrapper" id="loading-wrapper">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Processing startup idea...</p>
+            <p class="loading-subtext">Compiling business plans, calculating viability indexes, and designing responsive landing page code.</p>
+            
+            <div class="skeleton-grid">
+                <div class="skeleton-card glass-panel">
+                    <div class="skeleton-line h-title"></div>
+                    <div class="skeleton-line h-text"></div>
+                    <div class="skeleton-line h-text w-short"></div>
+                    <div class="skeleton-line h-text w-shorter"></div>
+                </div>
+                <div class="skeleton-card glass-panel">
+                    <div class="skeleton-line h-title"></div>
+                    <div class="skeleton-line h-text"></div>
+                    <div class="skeleton-line h-text w-short"></div>
+                    <div class="skeleton-line h-text"></div>
+                    <div class="skeleton-line h-text w-shorter"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Dashboard Grid -->
+        <div class="dashboard-grid" id="dashboard-grid">
+            
+            <!-- Sidebar Panel: Scores, Analysis, Wallpapers -->
+            <div class="dashboard-sidebar">
+                
+                <!-- Score Card -->
+                <div class="eval-card glass-panel">
+                    <h3 class="eval-title">📈 Viability Index</h3>
+                    
+                    <div class="scores-container">
+                        <!-- Overall Score -->
+                        <div class="score-row">
+                            <div class="score-gauge sky" id="gauge-overall">
+                                <svg viewBox="0 0 56 56">
+                                    <circle cx="28" cy="28" r="22" class="bg-circle" />
+                                    <circle cx="28" cy="28" r="22" class="val-circle" stroke-dasharray="138" stroke-dashoffset="138" />
+                                </svg>
+                                <span class="score-value">0.0</span>
+                            </div>
+                            <div class="score-info">
+                                <div class="score-label">Overall Score</div>
+                                <div class="score-desc">General venture viability</div>
+                            </div>
+                        </div>
+
+                        <!-- Market Score -->
+                        <div class="score-row">
+                            <div class="score-gauge green" id="gauge-market">
+                                <svg viewBox="0 0 56 56">
+                                    <circle cx="28" cy="28" r="22" class="bg-circle" />
+                                    <circle cx="28" cy="28" r="22" class="val-circle" stroke-dasharray="138" stroke-dashoffset="138" />
+                                </svg>
+                                <span class="score-value">0.0</span>
+                            </div>
+                            <div class="score-info">
+                                <div class="score-label">Market Demand</div>
+                                <div class="score-desc">Target audience scaling</div>
+                            </div>
+                        </div>
+
+                        <!-- Problem Score -->
+                        <div class="score-row">
+                            <div class="score-gauge amber" id="gauge-problem">
+                                <svg viewBox="0 0 56 56">
+                                    <circle cx="28" cy="28" r="22" class="bg-circle" />
+                                    <circle cx="28" cy="28" r="22" class="val-circle" stroke-dasharray="138" stroke-dashoffset="138" />
+                                </svg>
+                                <span class="score-value">0.0</span>
+                            </div>
+                            <div class="score-info">
+                                <div class="score-label">Problem Urgency</div>
+                                <div class="score-desc">Pain-point intensity</div>
+                            </div>
+                        </div>
+
+                        <!-- Revenue Score -->
+                        <div class="score-row">
+                            <div class="score-gauge indigo" id="gauge-revenue">
+                                <svg viewBox="0 0 56 56">
+                                    <circle cx="28" cy="28" r="22" class="bg-circle" />
+                                    <circle cx="28" cy="28" r="22" class="val-circle" stroke-dasharray="138" stroke-dashoffset="138" />
+                                </svg>
+                                <span class="score-value">0.0</span>
+                            </div>
+                            <div class="score-info">
+                                <div class="score-label">Revenue Capture</div>
+                                <div class="score-desc">Scalability of pricing model</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Short analysis paragraph -->
+                    <div class="eval-analysis" id="analysis-text">
+                        Entering analysis of your startup idea...
+                    </div>
+                </div>
+
+                <!-- Mindset widget (Active wallpaper & motivational quote card) -->
+                <div class="mindset-widget glass-panel">
+                    <div class="mindset-widget-bg" id="mindset-widget-bg"></div>
+                    <div class="mindset-widget-content">
+                        <div class="mindset-tag" id="mindset-tag">Execution</div>
+                        <div class="mindset-quote" id="mindset-quote">“Success is built on risks, focus, hustle, patience, and consistency.”</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Panel: Tabs and Deliverables -->
+            <div class="dashboard-main">
+                <div class="tabs-header">
+                    <button class="tab-btn active" data-tab="tab-biz">📝 Business Plan</button>
+                    <button class="tab-btn" data-tab="tab-mkt">📣 Marketing Strategy</button>
+                    <button class="tab-btn" data-tab="tab-preview">🌐 Live Landing Page</button>
+                    <button class="tab-btn" data-tab="tab-download">💾 Download Package</button>
+                </div>
+
+                <!-- Business Plan Tab -->
+                <div class="tab-content active" id="tab-biz">
+                    <div class="glass-panel">
+                        <div class="content-header-actions">
+                            <button class="icon-btn" id="copy-biz-btn">
+                                📋 Copy Markdown
+                            </button>
+                        </div>
+                        <div class="markdown-view" id="biz-content"></div>
+                    </div>
+                </div>
+
+                <!-- Marketing Tab -->
+                <div class="tab-content" id="tab-mkt">
+                    <div class="glass-panel">
+                        <div class="content-header-actions">
+                            <button class="icon-btn" id="copy-mkt-btn">
+                                📋 Copy Markdown
+                            </button>
+                        </div>
+                        <div class="markdown-view" id="mkt-content"></div>
+                    </div>
+                </div>
+
+                <!-- Landing Page Tab -->
+                <div class="tab-content" id="tab-preview">
+                    <div class="iframe-container glass-panel">
+                        <iframe id="live-preview-frame" class="iframe-view" sandbox="allow-scripts"></iframe>
+                    </div>
+                    
+                    <div class="code-expander">
+                        <div class="code-header">
+                            <span>📄 landing_page.html</span>
+                            <button class="icon-btn" id="copy-html-btn" style="padding: 4px 10px; font-size: 0.75rem;">📋 Copy Code</button>
+                        </div>
+                        <pre class="code-editor-box" id="html-code-box">HTML Code goes here...</pre>
+                    </div>
+                </div>
+
+                <!-- Download Package Tab -->
+                <div class="tab-content" id="tab-download">
+                    <div class="downloads-grid">
+                        <div class="download-card glass-panel">
+                            <div class="download-icon">📝</div>
+                            <div class="download-title">Business Plan</div>
+                            <div class="download-desc">Comprehensive startup prospectus (.md)</div>
+                            <a id="dl-biz-btn" class="download-btn">⬇️ Download File</a>
+                        </div>
+                        <div class="download-card glass-panel">
+                            <div class="download-icon">📣</div>
+                            <div class="download-title">Marketing Strategy</div>
+                            <div class="download-desc">Launch strategies and campaigns (.md)</div>
+                            <a id="dl-mkt-btn" class="download-btn">⬇️ Download File</a>
+                        </div>
+                        <div class="download-card glass-panel">
+                            <div class="download-icon">🌐</div>
+                            <div class="download-title">Landing Page</div>
+                            <div class="download-desc">Single-file HTML site code (.html)</div>
+                            <a id="dl-html-btn" class="download-btn">⬇️ Download HTML</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Founder's Motivation Gallery -->
+        <section class="gallery-section">
+            <div class="badge-glow">Motivation & Mindset</div>
+            <h2>Founder's Wallpaper Gallery</h2>
+            <p class="subtitle" style="margin-bottom: 24px;">Equip your workspace. Change the dashboard backdrop wallpaper dynamically to stay locked in on your startup vision.</p>
+            
+            <div class="gallery-grid">
+                
+                <!-- Wallpaper 1 -->
+                <div class="gallery-card glass-panel">
+                    <div class="gallery-img-container">
+                        <img src="/static/images/wallpaper_think_bigger.jpg" alt="Think Bigger" class="gallery-img">
+                    </div>
+                    <div class="gallery-info">
+                        <div class="gallery-title">Think Bigger & Higher</div>
+                        <div class="gallery-desc">Keep your ambitions elevated. Visual cues of growth and architectural height.</div>
+                        <div class="gallery-actions">
+                            <button class="apply-theme-btn" data-id="think_bigger">Apply Theme</button>
+                            <a href="/static/images/wallpaper_think_bigger.jpg" download="wallpaper_think_bigger.jpg" style="display:contents;">
+                                <button class="dl-image-btn">⬇️ Get</button>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wallpaper 2 -->
+                <div class="gallery-card glass-panel">
+                    <div class="gallery-img-container">
+                        <img src="/static/images/wallpaper_staircase_success.jpg" alt="Staircase of Success" class="gallery-img">
+                    </div>
+                    <div class="gallery-info">
+                        <div class="gallery-title">Staircase of Success</div>
+                        <div class="gallery-desc">A roadmap of consistency, risks, failure, focus, and rejections leading to success.</div>
+                        <div class="gallery-actions">
+                            <button class="apply-theme-btn" data-id="staircase_success">Apply Theme</button>
+                            <a href="/static/images/wallpaper_staircase_success.jpg" download="wallpaper_staircase_success.jpg" style="display:contents;">
+                                <button class="dl-image-btn">⬇️ Get</button>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wallpaper 3 -->
+                <div class="gallery-card glass-panel">
+                    <div class="gallery-img-container">
+                        <img src="/static/images/wallpaper_focus.jpg" alt="Focus Word Cloud" class="gallery-img">
+                    </div>
+                    <div class="gallery-info">
+                        <div class="gallery-title">Ultimate Focus</div>
+                        <div class="gallery-desc">Visual typography cloud highlighting drive, sweat, speed, power, and commitment.</div>
+                        <div class="gallery-actions">
+                            <button class="apply-theme-btn" data-id="focus">Apply Theme</button>
+                            <a href="/static/images/wallpaper_focus.jpg" download="wallpaper_focus.jpg" style="display:contents;">
+                                <button class="dl-image-btn">⬇️ Get</button>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wallpaper 4 -->
+                <div class="gallery-card glass-panel">
+                    <div class="gallery-img-container">
+                        <img src="/static/images/wallpaper_starts_small.jpg" alt="A Big Business Starts Small" class="gallery-img">
+                    </div>
+                    <div class="gallery-info">
+                        <div class="gallery-title">Starts Small</div>
+                        <div class="gallery-desc">Richard Branson's classic reminder: every multinational giant was once a tiny idea.</div>
+                        <div class="gallery-actions">
+                            <button class="apply-theme-btn" data-id="starts_small">Apply Theme</button>
+                            <a href="/static/images/wallpaper_starts_small.jpg" download="wallpaper_starts_small.jpg" style="display:contents;">
+                                <button class="dl-image-btn">⬇️ Get</button>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wallpaper 5 -->
+                <div class="gallery-card glass-panel">
+                    <div class="gallery-img-container">
+                        <img src="/static/images/wallpaper_strong_mindset.jpg" alt="Strong Mindset" class="gallery-img">
+                    </div>
+                    <div class="gallery-info">
+                        <div class="gallery-title">Strong Mindset</div>
+                        <div class="gallery-desc">Building a company requires mental toughness. Keep this mindset card active.</div>
+                        <div class="gallery-actions">
+                            <button class="apply-theme-btn" data-id="strong_mindset">Apply Theme</button>
+                            <a href="/static/images/wallpaper_strong_mindset.jpg" download="wallpaper_strong_mindset.jpg" style="display:contents;">
+                                <button class="dl-image-btn">⬇️ Get</button>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wallpaper 6 -->
+                <div class="gallery-card glass-panel">
+                    <div class="gallery-img-container">
+                        <img src="/static/images/wallpaper_master_yourself.jpg" alt="Master Yourself" class="gallery-img">
+                    </div>
+                    <div class="gallery-info">
+                        <div class="gallery-title">Master Yourself</div>
+                        <div class="gallery-desc">Self-discipline is king. Elevate your status from a pawn to a master strategist.</div>
+                        <div class="gallery-actions">
+                            <button class="apply-theme-btn" data-id="master_yourself">Apply Theme</button>
+                            <a href="/static/images/wallpaper_master_yourself.jpg" download="wallpaper_master_yourself.jpg" style="display:contents;">
+                                <button class="dl-image-btn">⬇️ Get</button>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast" id="toast">
+        <span class="toast-icon">🚀</span>
+        <span class="toast-message">Startup package generated successfully!</span>
+    </div>
+
+    <!-- App Logic Scripts -->
+    <script src="/static/app.js"></script>
+</body>
+</html>
