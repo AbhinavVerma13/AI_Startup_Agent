@@ -1,10 +1,35 @@
 import os
 import json
 import requests
-from flask import Flask, render_template, request, jsonify
+import sqlite3
+import hashlib
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from config import GROQ_API_KEY, GEMINI_API_KEY
 
 app = Flask(__name__)
+app.secret_key = os.urandom(24) # Set secure session key
+
+DB_FILE = "users.db"
+
+# Initialize SQLite database
+def init_db():
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+init_db()
+
+# Password Hashing Helper
+def hash_password(password):
+    return hashlib.sha256(password.encode('utf-8')).hexdigest()
 
 # Helper to call Groq API with JSON response format
 def call_groq_api(prompt, api_key):
@@ -205,12 +230,84 @@ def generate_local_fallback(name, industry, idea):
 # Routes
 @app.route('/')
 def index():
-    # If no key is set, we are in Demo mode
+    # Render login screen if user is not in session
+    if 'user_email' not in session:
+        return render_template('index.html', logged_in=False, user_email=None)
+        
     is_demo = not (GROQ_API_KEY and GROQ_API_KEY.startswith("gsk_")) and not (GEMINI_API_KEY and GEMINI_API_KEY.startswith("AIzaSy"))
-    return render_template('index.html', is_demo=is_demo)
+    return render_template('index.html', logged_in=True, user_email=session['user_email'], is_demo=is_demo)
+
+# Authentication API: Register
+@app.route('/api/register', methods=['POST'])
+def register():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+        
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
+    
+    if not email or not password:
+        return jsonify({"error": "Email and password are required"}), 400
+        
+    hashed = hash_password(password)
+    
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO users (email, password) VALUES (?, ?)", (email, hashed))
+        conn.commit()
+        conn.close()
+        
+        session['user_email'] = email
+        return jsonify({"success": True, "message": "Account created successfully!"})
+    except sqlite3.IntegrityError:
+        return jsonify({"error": "An account with this email already exists"}), 400
+    except Exception as e:
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+# Authentication API: Login
+@app.route('/api/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+        
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
+    
+    if not email or not password:
+        return jsonify({"error": "Email and password are required"}), 400
+        
+    hashed = hash_password(password)
+    
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        cursor.execute("SELECT password FROM users WHERE email = ?", (email,))
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row and row[0] == hashed:
+            session['user_email'] = email
+            return jsonify({"success": True, "message": "Logged in successfully!"})
+        else:
+            return jsonify({"error": "Invalid email or password"}), 401
+    except Exception as e:
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+# Authentication: Logout
+@app.route('/logout')
+def logout():
+    session.pop('user_email', None)
+    return redirect(url_for('index'))
 
 @app.route('/api/generate', methods=['POST'])
 def generate():
+    # Protection: check authentication
+    if 'user_email' not in session:
+        return jsonify({"error": "Unauthorized. Please sign in first."}), 401
+        
     data = request.get_json()
     if not data:
         return jsonify({"error": "No data provided"}), 400

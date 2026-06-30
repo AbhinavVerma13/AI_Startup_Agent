@@ -17,6 +17,10 @@
     <div class="bg-wallpaper-wrapper" id="bg-wrapper"></div>
     <div class="bg-overlay"></div>
 
+    {% if logged_in %}
+    <!-- ========================================== -->
+    <!-- MAIN APPLICATION VIEW                      -->
+    <!-- ========================================== -->
     <div class="app-container">
         <!-- Header -->
         <header class="glass-panel">
@@ -27,6 +31,20 @@
                 <div class="theme-pill" title="Active Wallpaper Theme">
                     🖼️ Theme: <span id="active-theme-name">Think Bigger</span>
                 </div>
+                
+                <!-- Clerk Style User Profile Dropdown -->
+                <div class="user-menu-wrapper">
+                    <div class="user-avatar-pill" id="user-avatar-trigger" title="Account Actions">
+                        {{ user_email[0].upper() if user_email else 'U' }}
+                    </div>
+                    <div class="user-dropdown-menu" id="user-dropdown">
+                        <div class="dropdown-header">
+                            <span class="user-email-display">{{ user_email }}</span>
+                        </div>
+                        <a href="/logout" class="dropdown-item">🚪 Sign out</a>
+                    </div>
+                </div>
+
                 <div class="api-badge {% if is_demo %}offline{% endif %}">
                     <span class="status-dot"></span>
                     {% if is_demo %}Demo Mode{% else %}AI Active{% endif %}
@@ -50,14 +68,9 @@
                         <input type="text" id="startup-name" class="text-input" placeholder="e.g. ChaiOnWheels" required value="ChaiOnWheels">
                     </div>
                     <div class="input-group">
-                        <label class="input-label" for="startup-industry">Industry Sector</label>
-                        <select id="startup-industry" class="select-input">
-                            <option value="Food & Beverage">Food & Beverage</option>
-                            <option value="Technology">Technology</option>
-                            <option value="Education">Education</option>
-                            <option value="Healthcare">Healthcare</option>
-                            <option value="E-commerce">E-commerce</option>
-                        </select>
+                        <label class="input-label" for="startup-industry">Industry / Sector</label>
+                        <!-- CHANGED: Free-text input field instead of select dropdown -->
+                        <input type="text" id="startup-industry" class="text-input" placeholder="e.g. EdTech, FinTech, B2B SaaS" required value="Food & Beverage">
                     </div>
                 </div>
 
@@ -79,10 +92,10 @@
 
             <!-- Examples tags -->
             <div class="suggestions-container">
-                <button class="suggestion-tag" data-name="ResuMagic" data-industry="Technology" data-idea="AI-powered resume optimizer that automatically scans a job description and updates bullet points in real-time to match candidate credentials.">✨ AI Resume Tailor</button>
-                <button class="suggestion-tag" data-name="BiteDash" data-industry="Food & Beverage" data-idea="Hyperlocal late-night kitchen networks delivering premium hot snacks to university students in under 12 minutes.">🍔 Late Night Snacks</button>
-                <button class="suggestion-tag" data-name="MedVerify" data-industry="Healthcare" data-idea="Blockchain-powered credential verification platform for hospitals to hire locum doctors with zero administrative delays.">🏥 Healthcare Verifier</button>
-                <button class="suggestion-tag" data-name="SkillSpring" data-industry="Education" data-idea="Interactive coding playground for kids using gamified cartoon story quests to explain data structures.">🎮 Kids Coding Games</button>
+                <button class="suggestion-tag" data-name="ResuMagic" data-industry="AI Technology" data-idea="AI-powered resume optimizer that automatically scans a job description and updates bullet points in real-time to match candidate credentials.">✨ AI Resume Tailor</button>
+                <button class="suggestion-tag" data-name="BiteDash" data-industry="On-Demand Food" data-idea="Hyperlocal late-night kitchen networks delivering premium hot snacks to university students in under 12 minutes.">🍔 Late Night Snacks</button>
+                <button class="suggestion-tag" data-name="MedVerify" data-industry="HealthTech" data-idea="Blockchain-powered credential verification platform for hospitals to hire locum doctors with zero administrative delays.">🏥 Healthcare Verifier</button>
+                <button class="suggestion-tag" data-name="SkillSpring" data-industry="EdTech Learning" data-idea="Interactive coding playground for kids using gamified cartoon story quests to explain data structures.">🎮 Kids Coding Games</button>
             </div>
         </div>
 
@@ -385,6 +398,58 @@
             </div>
         </section>
     </div>
+    {% else %}
+    <!-- ========================================== -->
+    <!-- AUTHENTICATION CARD VIEW (Clerk Style)     -->
+    <!-- ========================================== -->
+    <div class="auth-container">
+        <div class="auth-card glass-panel">
+            <div class="logo" style="justify-content: center; margin-bottom: 24px;">
+                🚀 <span>AI Startup Builder</span>
+            </div>
+            
+            <div id="auth-title-box">
+                <h2 class="auth-title" id="auth-header-text">Create your account</h2>
+                <p class="loading-subtext" id="auth-sub-text" style="margin-top: -12px; margin-bottom: 24px;">Welcome! Please fill in the details to get started.</p>
+            </div>
+
+            <!-- Continue with Google Mock Button -->
+            <button class="google-btn" id="google-signin-mock">
+                <svg width="18" height="18" viewBox="0 0 18 18">
+                    <path fill="#4285F4" d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.47h4.84a4.14 4.14 0 0 1-1.8 2.71v2.26h2.91c1.7-1.56 2.69-3.86 2.69-6.6z"/>
+                    <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.2l-2.91-2.26c-.8.54-1.84.87-3.05.87-2.34 0-4.33-1.58-5.03-3.7H1.03v2.33C2.51 16.03 5.51 18 9 18z"/>
+                    <path fill="#FBBC05" d="M3.97 10.7a5.4 5.4 0 0 1 0-3.4V4.97H1.03a9 9 0 0 0 0 8.06l2.94-2.33z"/>
+                    <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35L15 2.1C13.46.67 11.43 0 9 0 5.51 0 2.51 1.97 1.03 4.97L3.97 7.3C4.67 5.18 6.66 3.58 9 3.58z"/>
+                </svg>
+                <span>Continue with Google</span>
+            </button>
+
+            <div class="divider">or</div>
+
+            <!-- Local Email/Password Form -->
+            <form id="auth-form">
+                <div class="input-group">
+                    <label class="input-label" for="auth-email">Email Address</label>
+                    <input type="email" id="auth-email" class="text-input" placeholder="enter your email address" required style="margin-bottom: 16px;">
+                </div>
+                <div class="input-group">
+                    <label class="input-label" for="auth-password">Password</label>
+                    <input type="password" id="auth-password" class="text-input" placeholder="create a password" required style="margin-bottom: 24px;">
+                </div>
+                
+                <button type="submit" class="submit-btn" id="auth-submit-btn" style="width: 100%;">
+                    <span class="submit-spinner loading-spinner" id="auth-spinner" style="display: none; width: 16px; height: 16px; margin: 0; border-width: 2px;"></span>
+                    <span id="auth-submit-text">Continue</span>
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <span id="auth-switch-prompt">Already have an account?</span>
+                <span class="auth-link" id="auth-switch-link">Sign in</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Toast Notifications -->
     <div class="toast" id="toast">
